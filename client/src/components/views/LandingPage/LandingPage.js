@@ -6,6 +6,7 @@ import ImageSlider from '../../utils/ImageSlider';
 import CheckBox from './Sections/CheckBox';
 import RadioBox from './Sections/RadioBox';
 import {continents, price} from './Sections/Datas.js';
+import SearchFeature from './Sections/SearchFeature';
 
 function LandingPage () {
   const [Products, setProducts] = useState ([]);
@@ -16,6 +17,8 @@ function LandingPage () {
     continents: [],
     price: [],
   });
+
+  const [SearchTerm, setSearchTerms] = useState("")
 
   useEffect (() => {
     const variables = {
@@ -57,7 +60,7 @@ function LandingPage () {
   const renderCards = Products.map ((product, index) => {
     return (
       <Col key={index} lg={6} md={8} xs={24}>
-        <Card hoverable={true} cover={<ImageSlider images={product.images} />}>
+        <Card hoverable={true} cover={<a href={`/product/${product._id}`} ><ImageSlider images={product.images} /></a>}>
           <Meta title={product.title} description={`$${product.price}`} />
         </Card>
       </Col>
@@ -105,6 +108,22 @@ function LandingPage () {
     setFilters (newFilters);
   };
 
+  const updateSearchTerms = (newSearchTerm) =>{
+    
+    const variables = {
+      skip: 0,
+      limit: Limit,
+      filters: Filters,
+      searchTerm: newSearchTerm
+    }
+
+    setSkip(0)
+    setSearchTerms(newSearchTerm)
+    console.log(newSearchTerm)
+    getProducts(variables)
+  }
+
+
   return (
     <div style={{width: '75%', margin: '3rem auto'}}>
       <div style={{textAlign: 'center'}}>
@@ -130,6 +149,10 @@ function LandingPage () {
       </Row>
 
       {/*Search Box */}
+      <div style={{display:'flex',justifyContent:'flex-end', margin:'1rem auto'}}>
+        <SearchFeature refreshFunction={updateSearchTerms}/>
+      </div>
+
       {Products.length === 0
         ? <div
             style={{

@@ -62,6 +62,8 @@ router.post("/getProducts", (req, res) => {
     let skip= parseInt(req.body.skip);
 
     let findArgs ={};
+    let term = req.body.searchTerm;
+
 
     for(let key in req.body.filters){
         if(req.body.filters[key].length >0){
@@ -75,7 +77,10 @@ router.post("/getProducts", (req, res) => {
             }
         }
     }
-    Product.find(findArgs)
+
+    if(term){
+        Product.find(findArgs)
+        .find({$text:{$search: term}})
         .populate('writer')
         .sort([[sortBy,order]])
         .skip(skip)
@@ -84,7 +89,43 @@ router.post("/getProducts", (req, res) => {
             if(err) return res.status(400).json({success:false,err})
             return res.status(200).json({success:true, products, postSize:products.length})
         })
+    }else{
+        Product.find(findArgs)
+        .populate('writer')
+        .sort([[sortBy,order]])
+        .skip(skip)
+        .limit(limit)
+        .exec((err,products) =>{
+            if(err) return res.status(400).json({success:false,err})
+            return res.status(200).json({success:true, products, postSize:products.length})
+        })
+    }
+    
 })
+
+///?id=${productId}&type=single
+//id=12211,33333,4444 type=array
+router.get("/products_by_id", (req, res) => {
+
+    let type=req.query.type
+    let productIds = req.query.id
+
+    
+    if(type === 'array'){
+        let ids= req.query.id.split(',');
+        productIds = [];
+        productIds = ids.map(item =>{
+            return item
+        })
+    }
+    //we need to find the product information for product id
+    Product.find({'_id':{$in:productIds}})
+            .populate('writer')
+            .exec((err,product) =>{
+                if(err) return req.status(400).send(err)
+                return res.status(200).send(product)
+            })
+});
 
 
 module.exports = router;

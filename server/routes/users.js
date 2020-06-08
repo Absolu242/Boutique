@@ -18,6 +18,9 @@ router.get("/auth", auth, (req, res) => {
         lastname: req.user.lastname,
         role: req.user.role,
         image: req.user.image,
+        cart:req.user.cart,
+        history:req.user.history,
+        
     });
 });
 
@@ -65,6 +68,51 @@ router.get("/logout", auth, (req, res) => {
         return res.status(200).send({
             success: true
         });
+    });
+});
+
+router.post("/addToCart", auth, (req, res) => {
+
+    User.findOne({ _id: req.user._id },
+        (err, userInfo) => {
+
+        let duplicate = false;
+
+        userInfo.cart.forEach((cartInfo) =>{
+            if(cartInfo.id === req.query.productId){
+                duplicate = true;
+            }
+        })
+
+        if(duplicate){
+            User.findOneAndUpdate(
+                {_id: req.user._id, "cart.id": req.query.productId},
+                {$inc:{"cart.$.quantity":1}},
+                {new : true},
+                () =>{
+                    if (err) return res.json({ success: false, err });
+                    res.status(200).json(userInfo.cart)
+                }
+            )
+        }else{
+            User.findOneAndUpdate(
+                {_id: req.user._id},
+                {
+                    $push:{
+                        cart:{
+                            id: req.query.productId,
+                            quantity:1,
+                            date:Date.now()
+                        }
+                    }
+                },
+                {new : true},
+                (err, userInfo) =>{
+                    if (err) return res.json({ success: false, err });
+                    res.status(200).json(userInfo.cart)
+                }
+            )
+        }
     });
 });
 
